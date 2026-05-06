@@ -90,7 +90,7 @@ export const swaggerSpec = {
         summary: 'Gateway callback',
 
         description:
-          'Receives final payment status from gateway (idempotent).',
+          'Receives final payment status from gateway. Webhooks are stored idempotently and can be applied by transaction_id or payment_id for early callbacks.',
 
         requestBody: {
           required: true,
@@ -99,8 +99,9 @@ export const swaggerSpec = {
               schema: { $ref: '#/components/schemas/WebhookPayload' },
               example: {
                 transaction_id: 'txn_123',
+                payment_id: '00000000-0000-4000-8000-000000000001',
                 status: 'success',
-                timestamp: '2024-01-01T12:00:00Z',
+                timestamp: '2026-05-06T12:00:00Z',
               },
             },
           },
@@ -211,7 +212,9 @@ export const swaggerSpec = {
         required: ['transaction_id', 'status', 'timestamp'],
         properties: {
           transaction_id: { type: 'string' },
+          payment_id: { type: 'string', format: 'uuid' },
           status: { type: 'string' },
+          error: { type: 'string' },
           timestamp: { type: 'string' },
         },
       },

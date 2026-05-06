@@ -1,5 +1,5 @@
 import { db } from './client';
-import { Payment, PaymentStatus, CreatePaymentDTO } from '../types/payment';
+import { Payment, PaymentStatus, CreatePaymentDTO, WebhookPayload } from '../types/payment';
 import { config } from '../config';
 import { v4 as uuid } from 'uuid';
 
@@ -47,6 +47,26 @@ export class PaymentRepository {
       [txId]
     );
     return rows[0] || null;
+  }
+
+  async saveWebhookEvent(payload: WebhookPayload): Promise<void> {
+    await db.query(
+      `INSERT INTO webhook_events
+        (id, transaction_id, payment_id, status, error_message, received_at)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (transaction_id) DO UPDATE
+       SET
+         payment_id = COALESCE(webhook_events.payment_id, EXCLUDED.payment_id),
+         error_message = COALESCE(webhook_events.error_message, EXCLUDED.error_message)`,
+      [
+        uuid(),
+        payload.transaction_id,
+        payload.payment_id || null,
+        payload.status,
+        payload.error || null,
+        payload.timestamp,
+      ]
+    );
   }
 
   async updateStatus(
@@ -99,6 +119,32 @@ export class PaymentRepository {
          AND status NOT IN ('success', 'failed')
        RETURNING *`,
       [txId, status, errorMessage || null]
+    );
+
+    return rows[0] || null;
+  }
+
+  async applyWebhook(
+    txId: string,
+    paymentId: string | undefined,
+    status: 'success' | 'failed',
+    errorMessage?: string
+  ): Promise<Payment | null> {
+    const { rows } = await db.query<Payment>(
+      `UPDATE payments
+       SET status = $3,
+           gateway_transaction_id = COALESCE(gateway_transaction_id, $1),
+           error_message = CASE
+             WHEN $3 = 'failed' THEN COALESCE($4, error_message)
+             ELSE error_message
+           END
+       WHERE status NOT IN ('success', 'failed')
+         AND (
+           gateway_transaction_id = $1
+           OR ($2::uuid IS NOT NULL AND id = $2::uuid)
+         )
+       RETURNING *`,
+      [txId, paymentId || null, status, errorMessage || null]
     );
 
     return rows[0] || null;

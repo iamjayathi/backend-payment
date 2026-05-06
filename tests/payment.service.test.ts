@@ -10,8 +10,10 @@ jest.mock('../src/db/payment.repository', () => ({
     findById: jest.fn(),
     findByIdempotencyKey: jest.fn(),
     findByGatewayTransactionId: jest.fn(),
+    saveWebhookEvent: jest.fn(),
     updateStatus: jest.fn(),
     updateByGatewayTx: jest.fn(),
+    applyWebhook: jest.fn(),
   },
 }));
 
@@ -163,19 +165,23 @@ describe('PaymentService', () => {
   describe('handleWebhook', () => {
     it('applies webhook update to matching payment', async () => {
       const payment = makePayment({ status: 'success', gateway_transaction_id: 'txn_abc' });
-      repo.updateByGatewayTx.mockResolvedValue(payment);
+      repo.saveWebhookEvent.mockResolvedValue(undefined);
+      repo.applyWebhook.mockResolvedValue(payment);
 
       await service.handleWebhook({
         transaction_id: 'txn_abc',
+        payment_id: 'pay-123',
         status: 'success',
         timestamp: new Date().toISOString(),
       });
 
-      expect(repo.updateByGatewayTx).toHaveBeenCalledWith('txn_abc', 'success', undefined);
+      expect(repo.saveWebhookEvent).toHaveBeenCalled();
+      expect(repo.applyWebhook).toHaveBeenCalledWith('txn_abc', 'pay-123', 'success', undefined);
     });
 
     it('handles duplicate webhook gracefully (no matching payment)', async () => {
-      repo.updateByGatewayTx.mockResolvedValue(null);
+      repo.saveWebhookEvent.mockResolvedValue(undefined);
+      repo.applyWebhook.mockResolvedValue(null);
 
       // Should not throw
       await expect(

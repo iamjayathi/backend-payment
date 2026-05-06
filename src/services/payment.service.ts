@@ -19,6 +19,12 @@ export class PaymentService {
       logger.info('Returning existing payment (idempotent)', {
         paymentId: existing.id,
       });
+
+      if (existing.status === 'pending') {
+        await enqueuePayment(existing.id);
+        logger.info('Existing pending payment re-queued', { paymentId: existing.id });
+      }
+
       return existing;
     }
 
@@ -26,7 +32,12 @@ export class PaymentService {
 
     logger.info('Payment created', { paymentId: payment.id });
 
-    await enqueuePayment(payment.id);
+    try {
+      await enqueuePayment(payment.id);
+    } catch (err) {
+      logger.error('Payment queue enqueue failed', { paymentId: payment.id, err });
+      throw err;
+    }
 
     logger.info('Payment queued', { paymentId: payment.id });
 
@@ -126,17 +137,23 @@ export class PaymentService {
   }
 
   async handleWebhook(payload: WebhookPayload) {
-    const { transaction_id, status, error } = payload;
+    const { transaction_id, payment_id, status, error } = payload;
 
-    logger.info('Webhook received', { transaction_id, status });
+    logger.info('Webhook received', { transaction_id, payment_id, status });
 
-    const updated = await paymentRepository.updateByGatewayTx(
+    await paymentRepository.saveWebhookEvent(payload);
+
+    const updated = await paymentRepository.applyWebhook(
       transaction_id,
+      payment_id,
       status,
       error
     );
 
-    if (!updated) return;
+    if (!updated) {
+      logger.info('Webhook stored without payment update', { transaction_id, payment_id, status });
+      return;
+    }
 
     logger.info('Webhook applied', {
       paymentId: updated.id,

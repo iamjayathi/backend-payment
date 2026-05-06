@@ -27,6 +27,7 @@ router.post(
   '/webhooks/payment',
   [
     body('transaction_id').isString().notEmpty(),
+    body('payment_id').optional().isUUID(),
     body('status').isIn(['success', 'failed']),
     body('timestamp').isISO8601(),
     body('error').optional().isString(),

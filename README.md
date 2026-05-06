@@ -42,6 +42,7 @@ The gateway simulator randomly returns success, non-retriable failure, or timeou
 | Async processing | API enqueues a BullMQ job and returns the payment immediately. |
 | Concurrency | Worker uses an atomic `pending -> processing` DB update so only one job can process a payment. |
 | Retries | BullMQ retries timeout/retriable gateway errors. |
+| Webhooks | Gateway callbacks are stored idempotently and applied only if the payment is not already terminal. |
 | Observability | Logs show payment creation, queue pickup, gateway result, retry, and final status. |
 
 ## Setup
@@ -147,10 +148,13 @@ Content-Type: application/json
 ```json
 {
   "transaction_id": "txn_abc123",
+  "payment_id": "00000000-0000-4000-8000-000000000001",
   "status": "success",
   "timestamp": "2026-05-06T10:00:00Z"
 }
 ```
+
+`payment_id` is optional. It allows the simulator to handle early callbacks before a transaction id has been attached to the payment. Duplicate or conflicting callbacks are stored, but terminal payments are not overwritten.
 
 ### Dead Letter Queue
 

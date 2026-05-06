@@ -29,6 +29,17 @@ CREATE INDEX IF NOT EXISTS idx_payments_idempotency_key ON payments(idempotency_
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
 CREATE INDEX IF NOT EXISTS idx_payments_gateway_tx ON payments(gateway_transaction_id);
 
+CREATE TABLE IF NOT EXISTS webhook_events (
+  id UUID PRIMARY KEY,
+  transaction_id VARCHAR(255) UNIQUE NOT NULL,
+  payment_id UUID,
+  status VARCHAR(20) NOT NULL,
+  error_message TEXT,
+  received_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_events_payment_id ON webhook_events(payment_id);
+
 -- Auto-update updated_at column
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$

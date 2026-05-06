@@ -31,9 +31,19 @@ export interface GatewayResponse {
 
 export interface WebhookPayload {
   transaction_id: string;
+  payment_id?: string;
   status: 'success' | 'failed';
   error?: string;
   timestamp: string;
+}
+
+export interface WebhookEvent {
+  id: string;
+  transaction_id: string;
+  payment_id: string | null;
+  status: 'success' | 'failed';
+  error_message: string | null;
+  received_at: Date;
 }
 
 export interface PaymentJobData {
