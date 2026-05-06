@@ -1,0 +1,41 @@
+{
+  "name": "payment-processing-system",
+  "version": "1.0.0",
+  "description": "Payment processing system with BullMQ, PostgreSQL, and gateway simulation",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "worker": "ts-node-dev --respawn --transpile-only src/workers/payment.worker.ts",
+    "test": "jest --runInBand --forceExit",
+    "test:coverage": "jest --runInBand --forceExit --coverage",
+    "db:migrate": "ts-node src/db/migrate.ts"
+  },
+  "dependencies": {
+    "bullmq": "^5.7.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.5.0",
+    "express-validator": "^7.0.1",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.3",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^9.0.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.11.0",
+    "@types/pg": "^8.10.9",
+    "@types/supertest": "^6.0.2",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/uuid": "^9.0.7",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}
