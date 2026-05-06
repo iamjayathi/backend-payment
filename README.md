@@ -55,13 +55,30 @@ npm install
 
 ### 2. Start PostgreSQL and Redis
 
-Using Docker:
+Using local services:
+
+```bash
+brew services start postgresql
+brew services start redis
+```
+
+If Redis was installed manually, verify it with:
+
+```bash
+redis-cli ping
+```
+
+Expected response:
+
+```text
+PONG
+```
+
+Docker Compose is also included as an optional shortcut:
 
 ```bash
 docker compose up -d
 ```
-
-Or use your own local PostgreSQL and Redis, then update `.env`.
 
 ### 3. Configure Environment
 
@@ -69,7 +86,7 @@ Or use your own local PostgreSQL and Redis, then update `.env`.
 cp .env.example .env
 ```
 
-Default local values:
+Default Docker values:
 
 ```env
 PORT=3000
@@ -78,6 +95,12 @@ REDIS_URL=redis://localhost:6379
 MAX_RETRIES=3
 RETRY_DELAY_BASE_MS=1000
 WEBHOOK_SECRET=your-webhook-secret-here
+```
+
+If you are using your local macOS PostgreSQL user, update `DATABASE_URL`. Example:
+
+```env
+DATABASE_URL=postgres://jayathimishra@localhost:5432/payments_db
 ```
 
 ### 4. Run Migration
